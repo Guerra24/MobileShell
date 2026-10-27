@@ -37,8 +37,6 @@ public static class XamlWindowExtensions
 
     public unsafe static void PositionAppBar(this XamlWindow window, float height, uint edge)
     {
-
-
         var monitor = MonitorFromPoint(new POINT(), MONITOR.MONITOR_DEFAULTTOPRIMARY);
 
         MONITORINFO mi = new()
