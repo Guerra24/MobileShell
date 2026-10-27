@@ -193,10 +193,7 @@ public sealed partial class NavBar : Grid
         startHoldTimer.Stop();
         Start.ReleasePointerCaptures();
         Service.StatusBarViewModel.SetOneHanded(!Service.StatusBarViewModel.OneHanded);
-        Task.Delay(500).ContinueWith(t =>
-        {
-            window.PositionAppBar(AppBarHeight, AppBarEdge);
-        });
+        Task.Delay(500).ContinueWith(t => window.PositionAppBar(AppBarHeight, AppBarEdge));
     }
 
     private void Start_StartTimer(object sender, PointerRoutedEventArgs e)

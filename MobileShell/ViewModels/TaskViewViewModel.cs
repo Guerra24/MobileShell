@@ -7,7 +7,6 @@ using TerraFX.Interop.Windows;
 using Windows.UI;
 using Windows.UI.Core;
 using WindowsUdk.UI.Shell;
-using XamlHostingKit;
 using static TerraFX.Interop.Windows.Windows;
 
 namespace MobileShell.ViewModels;
@@ -24,7 +23,6 @@ public partial class TaskViewViewModel : ObservableObject
     public TaskViewViewModel(CoreDispatcher dispatcher)
     {
         Dispatcher = dispatcher;
-        dispatcher = XamlWindow.Current.Dispatcher;
     }
 
     public async void Show()
@@ -115,7 +113,7 @@ public partial class TaskViewViewModel : ObservableObject
         var gcHandle = GCHandle.FromIntPtr(lParam);
         var list = (List<TaskViewAppEntry>)gcHandle.Target!;
 
-        if (list != null && IsValidWindow(hwnd))
+        if (IsValidWindow(hwnd))
         {
             var length = GetWindowTextLengthW(hwnd);
             var title = string.Empty;

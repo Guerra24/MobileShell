@@ -13,7 +13,6 @@
     <CsWinRTExcludes>Windows;Microsoft;WindowsUdk.System.UserProfile</CsWinRTExcludes>
     <CsWinRTIncludes>WindowsUdk;UndockedDevKit</CsWinRTIncludes>
     <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
-    <Platforms>AnyCPU</Platforms>
     <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
 

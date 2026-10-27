@@ -53,9 +53,7 @@ public sealed partial class TaskView : Grid
         window.Move((float)work.X, (float)work.Y);
         window.Resize((float)work.Width, (float)work.Height);
 
-        var visual = ElementCompositionPreview.GetElementVisual(Desktop);
-
-        desktop = WindowThumbnailGenerator.GetDesktopBackgroundThumbnail(window.WindowHandle, visual.Compositor, area.Width, area.Height);
+        desktop = WindowThumbnailGenerator.GetDesktopBackgroundThumbnail(window.WindowHandle, window.Compositor, area.Width, area.Height);
 
         var virtualLeft = GetSystemMetrics(SM.SM_XVIRTUALSCREEN) / XamlRoot.RasterizationScale;
         var virtualTop = GetSystemMetrics(SM.SM_YVIRTUALSCREEN) / XamlRoot.RasterizationScale;
