@@ -1,0 +1,32 @@
+﻿<UserControl
+    x:Class="MobileShell.Views.Items.TaskViewApp"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MobileShell.Views.Items"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	DataContextChanged="UserControl_DataContextChanged"
+    mc:Ignorable="d"
+    d:DesignHeight="564"
+    d:DesignWidth="300">
+
+	<Grid Width="{x:Bind Data.Width, Mode=OneWay}">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="64" />
+			<RowDefinition Height="500" />
+		</Grid.RowDefinitions>
+		<Grid>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="Auto"/>
+				<ColumnDefinition/>
+				<ColumnDefinition Width="Auto"/>
+			</Grid.ColumnDefinitions>
+			<Image Source="{x:Bind Data.Icon, Mode=OneWay}" Width="32" Height="32" Margin="16, 16, 0, 16" />
+			<TextBlock Grid.Column="1" Text="{x:Bind Data.TaskViewAppEntry.Title, Mode=OneWay}" FontSize="21" TextTrimming="CharacterEllipsis" Padding="16,0" VerticalAlignment="Center" />
+			<Button Grid.Column="2" Padding="8" Command="{x:Bind Data.CloseWindowCommand}" Margin="0,0,16,0">
+				<FontIcon Glyph="&#xE894;" FontSize="30" />
+			</Button>
+		</Grid>
+		<Border x:Name="Preview" Grid.Row="1" />
+	</Grid>
+</UserControl>

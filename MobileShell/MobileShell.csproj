@@ -1,0 +1,80 @@
+﻿<Project>
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+
+  <PropertyGroup>
+    <Platform Condition=" '$(Platform)' == 'AnyCPU' ">x64</Platform>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net11.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.26100.0</TargetPlatformMinVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseUwp>true</UseUwp>
+    <Platforms>x64;ARM64</Platforms>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <PublishProfile>win-$(Platform).pubxml</PublishProfile>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <PublishAot>true</PublishAot>
+    <DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <MicrosoftWindowsSdkBuildToolsMSIXPackageVersion>1.7.260903100</MicrosoftWindowsSdkBuildToolsMSIXPackageVersion>
+    <MicrosoftWindowsSDKBuildToolsPackageVersion>10.0.26100.9169</MicrosoftWindowsSDKBuildToolsPackageVersion>
+    <WindowsSdkPackageVersion>10.0.26100.87</WindowsSdkPackageVersion>
+    <AppxPackageSigningEnabled>False</AppxPackageSigningEnabled>
+    <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+    <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
+    <AppxSymbolPackageEnabled>True</AppxSymbolPackageEnabled>
+    <GenerateTestArtifacts>False</GenerateTestArtifacts>
+    <AppxBundle>Always</AppxBundle>
+    <AppxBundlePlatforms>x64|arm64</AppxBundlePlatforms>
+    <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
+    <AppxLogTelemetryFromSideloadingScript>False</AppxLogTelemetryFromSideloadingScript>
+    <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
+    <AppxPackageSigningTimestampServerUrl>http://timestamp.digicert.com</AppxPackageSigningTimestampServerUrl>
+    <AppxTestLayoutEnabled>False</AppxTestLayoutEnabled>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CsWinRTAotWarningLevel>3</CsWinRTAotWarningLevel>
+    <DefineConstants>DISABLE_XAML_GENERATED_MAIN;$(DefineConstants)</DefineConstants>
+    <Features>runtime-async=on</Features>
+    <UseOptimizedPublish>false</UseOptimizedPublish><!-- Workaround -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="CommunityToolkit.Uwp.Extensions" Version="8.2.251219" />
+    <PackageReference Include="COMplicated.WinUI.Lite" Version="2.8.8-prerelease.260914002" />
+    <PackageReference Include="TerraFX.Interop.Windows" Version="10.0.26100.6" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-rc.3.26522.148" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.3.1" />
+    <PackageReference Include="Microsoft.UI.Xaml" Version="2.8.7" ExcludeAssets="all" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" ExcludeAssets="all" />
+    <PackageReference Include="XamlHostingKit" Version="0.2.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\UndockedDevKit.Projection\UndockedDevKit.Projection.csproj" />
+  </ItemGroup>
+
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
+  <PropertyGroup>
+    <AppxPackageDir>$(AppxPackageDirInProjectDir)</AppxPackageDir>
+    <AppxUploadPackageDir>$(AppxPackageDirInProjectDir)$(ProjectName)\</AppxUploadPackageDir>
+    <AppxPackageTestDir Condition="'$(AppxPackageDir)' != ''">$(AppxPackageDir)$(ProjectName)\</AppxPackageTestDir>
+  </PropertyGroup>
+
+  <Target Name="RemoveMergedPris" AfterTargets="GetPackagingOutputs">
+    <ItemGroup>
+      <PackagingOutputs Remove="@(PackagingOutputs)" Condition="'%(Extension)' == '.pri' And '%(Filename)' != 'resources'" />
+    </ItemGroup>
+  </Target>
+
+  <!-- Fixes MSIX tooling deleting intermediate msix and other files required for sideload -->
+  <Target Name="_DeleteAppxOutputFolderIfNecessary">
+    <Message Importance="High" Text="Remove _DeleteAppxOutputFolderIfNecessary" />
+  </Target>
+  <!-- Remove uneeded files -->
+  <Target Name="_AddWindowsInstallScriptToTestLayout">
+    <Message Importance="High" Text="Remove _AddWindowsInstallScriptToTestLayout" />
+  </Target>
+</Project>

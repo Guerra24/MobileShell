@@ -1,0 +1,13 @@
+<Solution>
+  <Configurations>
+    <Platform Name="ARM64" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="MobileShell/MobileShell.csproj">
+    <Platform Solution="*|ARM64" Project="ARM64" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Deploy />
+  </Project>
+  <Project Path="UndockedDevKit.Projection/UndockedDevKit.Projection.csproj" />
+  <Project Path="UndockedDevKit.Wrapper/UndockedDevKit.Wrapper.vcxproj" Id="9cf1fc5b-3761-446c-bbfc-f20061559c5b" />
+</Solution>
