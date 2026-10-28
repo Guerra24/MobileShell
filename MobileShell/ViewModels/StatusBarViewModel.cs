@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Windows.Devices.Radios;
 using Windows.Globalization.DateTimeFormatting;
 using Windows.UI.Core;
@@ -32,6 +33,7 @@ public partial class StatusBarViewModel : ObservableObject, IDisposable
     private readonly DateTimeFormatter clockFormatter = new("hour minute");
     private NotificationsSettings notificationsSettings;
     private Radio? bluetooth;
+    private ShellViewCoordinator shellActionCenter, shellControlCenter;
 
     public StatusBarViewModel(CoreDispatcher dispatcher)
     {
@@ -57,6 +59,9 @@ public partial class StatusBarViewModel : ObservableObject, IDisposable
         generalTimer.Interval = TimeSpan.FromSeconds(1);
         generalTimer.Tick += GeneralTimer_Tick;
         generalTimer.Start();
+
+        shellActionCenter = new(ShellView.ActionCenter);
+        shellControlCenter = new(ShellView.ControlCenter);
 
         InitRadios();
     }
@@ -113,6 +118,24 @@ public partial class StatusBarViewModel : ObservableObject, IDisposable
     {
         OneHanded = state;
         OneHandedModeChanged?.Invoke();
+    }
+
+    [RelayCommand]
+    private async Task ActionCenter()
+    {
+        if (shellActionCenter.Visibility == ViewVisibility.Hidden)
+            await shellActionCenter.TryShowAsync(new ShowShellViewOptions());
+        else
+            await shellActionCenter.TryDismissAsync(new DismissShellViewOptions());
+    }
+
+    [RelayCommand]
+    private async Task ControlCenter()
+    {
+        if (shellControlCenter.Visibility == ViewVisibility.Hidden)
+            await shellControlCenter.TryShowAsync(new ShowShellViewOptions());
+        else
+            await shellControlCenter.TryDismissAsync(new DismissShellViewOptions());
     }
 
     public void Dispose()

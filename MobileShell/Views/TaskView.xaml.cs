@@ -35,8 +35,6 @@ public sealed partial class TaskView : Grid
         Data.ShowTaskView += ShowTaskView;
         Data.HideTaskView += HideTaskView;
 
-        Canvas.SetTop(Desktop, -StatusBar.AppBarHeight);
-
         window.CoreWindow.DispatcherQueue.ShutdownStarting += (sender, args) => Dispose();
     }
 
@@ -58,7 +56,7 @@ public sealed partial class TaskView : Grid
         var virtualLeft = GetSystemMetrics(SM.SM_XVIRTUALSCREEN) / XamlRoot.RasterizationScale;
         var virtualTop = GetSystemMetrics(SM.SM_YVIRTUALSCREEN) / XamlRoot.RasterizationScale;
 
-        desktop.Visual.Offset = new Vector3((float)virtualLeft, (float)virtualTop, 0);
+        desktop.Visual.Offset = new((float)(virtualLeft - work.Left), (float)(virtualTop - work.Top), 0);
 
         ElementCompositionPreview.SetElementChildVisual(Desktop, desktop.Visual);
 
@@ -66,9 +64,16 @@ public sealed partial class TaskView : Grid
 
         if (app != null)
         {
-            var scaledSource = new Size(app.ThumbnailFactory.SourceSize.Width / XamlRoot.RasterizationScale, app.ThumbnailFactory.SourceSize.Height / XamlRoot.RasterizationScale);
+            var factory = new WindowThumbnailFactory(app.WindowId);
 
-            using var thumbnail = app.ThumbnailFactory.CreateVisual(window.Compositor, scaledSource);
+            var scaledSource = new Size(factory.SourceSize.Width / XamlRoot.RasterizationScale, factory.SourceSize.Height / XamlRoot.RasterizationScale);
+
+            using var thumbnail = factory.CreateVisual(window.Compositor, scaledSource);
+
+            var relativeX = factory.SourceBounds.X / XamlRoot.RasterizationScale - window.Bounds.X;
+            var relativeY = factory.SourceBounds.Y / XamlRoot.RasterizationScale - window.Bounds.Y;
+
+            thumbnail.Visual.Offset = new((float)relativeX, (float)relativeY, 0.0f);
 
             ElementCompositionPreview.SetElementChildVisual(Foreground, thumbnail.Visual);
 
@@ -80,33 +85,37 @@ public sealed partial class TaskView : Grid
 
             var container = Apps.ContainerFromItem(app);
             var targetElement = container.FindDescendant("Preview")!;
+            var targetVisual = ElementCompositionPreview.GetElementVisual(targetElement);
 
-            var sourceTransform = Foreground.TransformToVisual(this);
-            var targetTransform = targetElement.TransformToVisual(this);
+            var targetPoint = targetElement.TransformToVisual(this).TransformPoint(new Point(0, 0));
 
-            var sourcePoint = sourceTransform.TransformPoint(new Point(0, 0));
-            var targetPoint = targetTransform.TransformPoint(new Point(0, 0));
-
-            float scaleX = (float)(targetElement.ActualWidth / Foreground.ActualWidth);
-            float scaleY = (float)(targetElement.ActualHeight / Foreground.ActualHeight);
-
-            float deltaX = (float)(targetPoint.X - sourcePoint.X);
-            float deltaY = (float)(targetPoint.Y - sourcePoint.Y);
+            float scaleX = (float)(targetElement.ActualWidth / scaledSource.Width);
+            float scaleY = (float)(targetElement.ActualHeight / scaledSource.Height);
 
             var easing = window.Compositor.CreateCubicBezierEasingFunction(new Vector2(0.00f, 0.4f), new Vector2(0.2f, 1.0f));
             var duration = TimeSpan.FromMilliseconds(400);
 
             var scaleAnim = window.Compositor.CreateVector3KeyFrameAnimation();
-            scaleAnim.InsertKeyFrame(1.0f, new Vector3(scaleX, scaleY, 1.0f), easing);
+            scaleAnim.InsertKeyFrame(1.0f, new(scaleX, scaleY, 1.0f), easing);
             scaleAnim.Duration = duration;
 
             var offsetAnim = window.Compositor.CreateVector3KeyFrameAnimation();
-            offsetAnim.InsertKeyFrame(1.0f, new Vector3(deltaX, deltaY, 0.0f), easing);
+            offsetAnim.InsertKeyFrame(1.0f, new((float)targetPoint.X, (float)targetPoint.Y, 0.0f), easing);
             offsetAnim.Duration = duration;
+
+            var snapEase = window.Compositor.CreateStepEasingFunction();
+            snapEase.StepCount = 1;
+            snapEase.IsFinalStepSingleFrame = true;
+
+            var opacityAnim = window.Compositor.CreateScalarKeyFrameAnimation();
+            opacityAnim.InsertKeyFrame(0.0f, 0.0f);
+            opacityAnim.InsertKeyFrame(1.0f, 1.0f, snapEase);
+            opacityAnim.Duration = duration;
 
             var animationGroup = window.Compositor.CreateScopedBatch(CompositionBatchTypes.Animation);
             thumbnail.Visual.StartAnimation("Scale", scaleAnim);
             thumbnail.Visual.StartAnimation("Offset", offsetAnim);
+            targetVisual.StartAnimation("Opacity", opacityAnim);
 
             var tcs = new TaskCompletionSource();
 
@@ -127,28 +136,26 @@ public sealed partial class TaskView : Grid
     {
         if (app != null)
         {
+            var factory = new WindowThumbnailFactory(app.WindowId);
 
-            var scaledSource = new Size(app.ThumbnailFactory.SourceSize.Width / XamlRoot.RasterizationScale, app.ThumbnailFactory.SourceSize.Height / XamlRoot.RasterizationScale);
+            var scaledSource = new Size(factory.SourceSize.Width / XamlRoot.RasterizationScale, factory.SourceSize.Height / XamlRoot.RasterizationScale);
 
-            using var thumbnail = app.ThumbnailFactory.CreateVisual(window.Compositor, scaledSource);
+            using var thumbnail = factory.CreateVisual(window.Compositor, scaledSource);
+
+            var relativeX = factory.SourceBounds.X / XamlRoot.RasterizationScale - window.Bounds.X;
+            var relativeY = factory.SourceBounds.Y / XamlRoot.RasterizationScale - window.Bounds.Y;
 
             var container = Apps.ContainerFromItem(app);
-            var targetElement = container.FindDescendant("Preview")!;
+            var sourceElement = container.FindDescendant("Preview")!;
+            var sourceVisual = ElementCompositionPreview.GetElementVisual(sourceElement);
 
-            var sourceTransform = Foreground.TransformToVisual(this);
-            var targetTransform = targetElement.TransformToVisual(this);
+            var targetPoint = sourceElement.TransformToVisual(this).TransformPoint(new Point(0, 0));
 
-            var sourcePoint = sourceTransform.TransformPoint(new Point(0, 0));
-            var targetPoint = targetTransform.TransformPoint(new Point(0, 0));
+            float scaleX = (float)(sourceElement.ActualWidth / scaledSource.Width);
+            float scaleY = (float)(sourceElement.ActualHeight / scaledSource.Height);
 
-            float scaleX = (float)(targetElement.ActualWidth / Foreground.ActualWidth);
-            float scaleY = (float)(targetElement.ActualHeight / Foreground.ActualHeight);
-
-            float deltaX = (float)(targetPoint.X - sourcePoint.X);
-            float deltaY = (float)(targetPoint.Y - sourcePoint.Y);
-
-            thumbnail.Visual.Scale = new Vector3(scaleX, scaleY, 1.0f);
-            thumbnail.Visual.Offset = new Vector3(deltaX, deltaY, 0.0f);
+            thumbnail.Visual.Scale = new(scaleX, scaleY, 1.0f);
+            thumbnail.Visual.Offset = new((float)targetPoint.X, (float)targetPoint.Y, 0.0f);
 
             ElementCompositionPreview.SetElementChildVisual(Foreground, thumbnail.Visual);
 
@@ -158,16 +165,22 @@ public sealed partial class TaskView : Grid
             var duration = TimeSpan.FromMilliseconds(400);
 
             var scaleAnim = window.Compositor.CreateVector3KeyFrameAnimation();
-            scaleAnim.InsertKeyFrame(1.0f, new Vector3(1.0f, 1.0f, 1.0f), easing);
+            scaleAnim.InsertKeyFrame(1.0f, new(1.0f, 1.0f, 1.0f), easing);
             scaleAnim.Duration = duration;
 
             var offsetAnim = window.Compositor.CreateVector3KeyFrameAnimation();
-            offsetAnim.InsertKeyFrame(1.0f, new Vector3(0.0f, 0.0f, 0.0f), easing);
+            offsetAnim.InsertKeyFrame(1.0f, new((float)relativeX, (float)relativeY, 0.0f), easing);
             offsetAnim.Duration = duration;
+
+            var opacityAnim = window.Compositor.CreateScalarKeyFrameAnimation();
+            opacityAnim.InsertKeyFrame(0.0f, 0.0f);
+            opacityAnim.InsertKeyFrame(1.0f, 0.0f);
+            opacityAnim.Duration = duration;
 
             var animationGroup = window.Compositor.CreateScopedBatch(CompositionBatchTypes.Animation);
             thumbnail.Visual.StartAnimation("Scale", scaleAnim);
             thumbnail.Visual.StartAnimation("Offset", offsetAnim);
+            sourceVisual.StartAnimation("Opacity", opacityAnim);
 
             var tcs = new TaskCompletionSource();
 
@@ -175,6 +188,8 @@ public sealed partial class TaskView : Grid
             animationGroup.End();
 
             await tcs.Task;
+
+            sourceVisual.Opacity = 1.0f;
         }
 
         window.Hide();

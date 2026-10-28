@@ -35,7 +35,7 @@ public partial class TaskViewAppViewModel : ObservableObject
         TaskViewViewModel = taskViewViewModel;
     }
 
-    public async void Load(TaskViewAppEntry? appEntry, UIElement preview)
+    public async void Load(TaskViewAppEntry? app, UIElement preview)
     {
         duplicateVisual?.Dispose();
         duplicateVisual = null;
@@ -44,12 +44,14 @@ public partial class TaskViewAppViewModel : ObservableObject
 
         ElementCompositionPreview.SetElementChildVisual(preview, null);
 
-        TaskViewAppEntry = appEntry;
+        TaskViewAppEntry = app;
 
-        if (appEntry == null)
+        if (app == null)
             return;
 
-        var ratio = appEntry.ThumbnailFactory.SourceSize.Width / appEntry.ThumbnailFactory.SourceSize.Height;
+        var factory = new WindowThumbnailFactory(app.WindowId);
+
+        var ratio = factory.SourceSize.Width / factory.SourceSize.Height;
 
         var width = 500 * ratio;
 
@@ -57,11 +59,11 @@ public partial class TaskViewAppViewModel : ObservableObject
 
         var visual = ElementCompositionPreview.GetElementVisual(preview);
 
-        duplicateVisual = appEntry.ThumbnailFactory.CreateVisual(visual.Compositor, new Size(width, 500));
+        duplicateVisual = factory.CreateVisual(visual.Compositor, new Size(width, 500));
 
         ElementCompositionPreview.SetElementChildVisual(preview, duplicateVisual.Visual);
 
-        using var icon = LoadAppIcon(appEntry.Handle);
+        using var icon = LoadAppIcon(app.Handle);
 
         if (icon != null)
         {

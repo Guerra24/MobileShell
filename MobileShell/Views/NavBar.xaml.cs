@@ -100,26 +100,39 @@ public sealed partial class NavBar : Grid
         }
     }
 
-    private LRESULT WindowSubclassProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, nuint uIdSubclass, nuint dwRefData)
+    private unsafe LRESULT WindowSubclassProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, nuint uIdSubclass, nuint dwRefData)
     {
-        if (uMsg == appBarMessage)
+        switch (uMsg)
         {
-            switch (wParam)
-            {
-                case ABN_POSCHANGED:
-                    window.PositionAppBar(AppBarHeight, AppBarEdge);
-                    return TRUE;
-                case ABN_FULLSCREENAPP:
-                    if (lParam == 1)
+            case WM.WM_MOUSEACTIVATE:
+                if (Service.TaskViewViewModel.IsVisible ||
+                    shellStart.Visibility == ViewVisibility.Visible ||
+                    shellSearch.Visibility == ViewVisibility.Visible)
+                {
+                    return MA.MA_NOACTIVATE;
+                }
+                break;
+            default:
+                if (uMsg == appBarMessage)
+                {
+                    switch (wParam)
                     {
-                        SetWindowPos((HWND)window.WindowHandle.Value, HWND.HWND_BOTTOM, 0, 0, 0, 0, SWP.SWP_NOMOVE | SWP.SWP_NOSIZE);
+                        case ABN_POSCHANGED:
+                            window.PositionAppBar(AppBarHeight, AppBarEdge);
+                            return TRUE;
+                        case ABN_FULLSCREENAPP:
+                            if (lParam == 1)
+                            {
+                                SetWindowPos((HWND)window.WindowHandle.Value, HWND.HWND_BOTTOM, 0, 0, 0, 0, SWP.SWP_NOMOVE | SWP.SWP_NOSIZE);
+                            }
+                            else
+                            {
+                                SetWindowPos((HWND)window.WindowHandle.Value, HWND.HWND_TOPMOST, 0, 0, 0, 0, SWP.SWP_NOMOVE | SWP.SWP_NOSIZE);
+                            }
+                            break;
                     }
-                    else
-                    {
-                        SetWindowPos((HWND)window.WindowHandle.Value, HWND.HWND_TOPMOST, 0, 0, 0, 0, SWP.SWP_NOMOVE | SWP.SWP_NOSIZE);
-                    }
-                    break;
-            }
+                }
+                break;
         }
         return DefSubclassProc(hWnd, uMsg, wParam, lParam);
     }

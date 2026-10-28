@@ -12,9 +12,7 @@
     d:DesignHeight="300"
     d:DesignWidth="400">
 
-	<Canvas>
-		<Border x:Name="Desktop" />
-	</Canvas>
+	<Border x:Name="Desktop" />
 	<ListView x:Name="Apps" IsItemClickEnabled="True" SelectionMode="None" ItemsSource="{x:Bind Data.AppList}"
 				Background="{ThemeResource LayerFillColorDefaultBrush}"
 				ext:ListViewExt.ItemClickCommand="{x:Bind Data.RestoreWindowCommand}"

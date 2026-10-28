@@ -7,7 +7,6 @@ using Windows.Graphics.Display;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
-using WindowsUdk.UI.Shell;
 using XamlHostingKit;
 using static TerraFX.Interop.Windows.Windows;
 
@@ -19,8 +18,6 @@ public sealed partial class StatusBar : Grid
     private static readonly uint AppBarEdge = ABE_TOP;
 
     private XamlWindow window;
-
-    private ShellViewCoordinator shellActionCenter, shellControlCenter;
 
     private SUBCLASSPROC windowSubclassProc = null!;
     private uint appBarMessage;
@@ -41,9 +38,6 @@ public sealed partial class StatusBar : Grid
         appBarMessage = window.AddAppBar();
 
         window.PositionAppBar(AppBarHeight, AppBarEdge);
-
-        shellActionCenter = new(ShellView.ActionCenter);
-        shellControlCenter = new(ShellView.ControlCenter);
 
         Data = Service.StatusBarViewModel;
 
@@ -98,35 +92,8 @@ public sealed partial class StatusBar : Grid
                     break;
             }
         }
+
         return DefSubclassProc(hWnd, uMsg, wParam, lParam);
-    }
-
-    private async void ActionCenter_Click(object sender, RoutedEventArgs e)
-    {
-        if (shellActionCenter.Visibility == ViewVisibility.Hidden)
-            await shellActionCenter.TryShowAsync(new ShowShellViewOptions
-            {
-                InvokerWindowId = window.WindowHandle.Value,
-                InputDeviceKind = InputDeviceKind.Mouse,
-                TransferForegroundRights = true,
-                PreferredPlacement = Windows.UI.Popups.Placement.Above,
-                InvocationPoint = new Windows.Foundation.Point(100, 36)
-            });
-        else
-            await shellActionCenter.TryDismissAsync(new DismissShellViewOptions { InputDeviceKind = InputDeviceKind.Mouse });
-    }
-
-    private async void ControlCenter_Click(object sender, RoutedEventArgs e)
-    {
-        if (shellControlCenter.Visibility == ViewVisibility.Hidden)
-            await shellControlCenter.TryShowAsync(new ShowShellViewOptions
-            {
-                InvokerWindowId = window.WindowHandle.Value,
-                InputDeviceKind = InputDeviceKind.Mouse,
-                TransferForegroundRights = true
-            });
-        else
-            await shellControlCenter.TryDismissAsync(new DismissShellViewOptions { InputDeviceKind = InputDeviceKind.Mouse });
     }
 
     private void OneHandedGrid_Tapped(object sender, TappedRoutedEventArgs e)

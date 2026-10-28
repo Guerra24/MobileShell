@@ -14,6 +14,7 @@ public class Service
         var collection = new ServiceCollection();
 
         collection.AddTransient((s) => XamlWindow.Current.Dispatcher);
+        collection.AddTransient((s) => XamlWindow.Current.DispatcherQueue);
 
         collection.AddSingleton<StatusBarViewModel>();
         collection.AddSingleton<TaskViewViewModel>();

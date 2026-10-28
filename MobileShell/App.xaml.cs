@@ -26,7 +26,7 @@ public partial class App : Application
 
         SetWindowPos((HWND)window.WindowHandle.Value, HWND.HWND_TOPMOST, 0, 0, 0, 0, SWP.SWP_NOMOVE | SWP.SWP_NOSIZE);
 
-        window.ExtendedStyles = WindowExtendedStyles.Topmost | WindowExtendedStyles.NoActivate | WindowExtendedStyles.NoRedirectionBitmap;
+        window.ExtendedStyles = WindowExtendedStyles.Topmost | WindowExtendedStyles.NoRedirectionBitmap;
         window.Styles = WindowStyles.Popup;
         window.MinHeight = 0;
         window.MinWidth = 0;

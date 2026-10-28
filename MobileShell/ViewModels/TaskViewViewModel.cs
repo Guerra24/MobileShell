@@ -6,7 +6,6 @@ using System.Runtime.InteropServices;
 using TerraFX.Interop.Windows;
 using Windows.UI;
 using Windows.UI.Core;
-using WindowsUdk.UI.Shell;
 using static TerraFX.Interop.Windows.Windows;
 
 namespace MobileShell.ViewModels;
@@ -129,7 +128,7 @@ public partial class TaskViewViewModel : ObservableObject
             {
                 Handle = hwnd,
                 Title = title,
-                ThumbnailFactory = new WindowThumbnailFactory(new WindowId(hwnd))
+                WindowId = new WindowId(hwnd)
             });
         }
 
