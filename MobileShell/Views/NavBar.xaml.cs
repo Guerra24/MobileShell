@@ -17,6 +17,7 @@ public sealed partial class NavBar : Grid
     private static readonly int AppBarHeight = 72;
     private static readonly uint AppBarEdge = ABE_BOTTOM;
 
+    private HMONITOR monitor;
     private XamlWindow window;
 
     private ShellViewCoordinator shellStart, shellSearch;
@@ -26,9 +27,10 @@ public sealed partial class NavBar : Grid
     private SUBCLASSPROC windowSubclassProc = null!;
     private uint appBarMessage;
 
-    public NavBar()
+    public NavBar(HMONITOR monitor)
     {
         this.InitializeComponent();
+        this.monitor = monitor;
         window = XamlWindow.Current;
 
         SetTaskbarState(ABS_AUTOHIDE);
@@ -41,7 +43,7 @@ public sealed partial class NavBar : Grid
 
         appBarMessage = window.AddAppBar();
 
-        window.PositionAppBar(AppBarHeight, AppBarEdge);
+        window.PositionAppBar(monitor, AppBarHeight, AppBarEdge);
 
         shellStart = new(ShellView.Start);
         shellSearch = new(ShellView.Search);
@@ -66,8 +68,8 @@ public sealed partial class NavBar : Grid
     private void NavBar_Loaded(object sender, RoutedEventArgs e)
     {
         var di = DisplayInformation.GetForCurrentView();
-        di.DpiChanged += (s, e) => window.PositionAppBar(AppBarHeight, AppBarEdge);
-        di.OrientationChanged += (s, e) => window.PositionAppBar(AppBarHeight, AppBarEdge);
+        di.DpiChanged += (s, e) => window.PositionAppBar(monitor, AppBarHeight, AppBarEdge);
+        di.OrientationChanged += (s, e) => window.PositionAppBar(monitor, AppBarHeight, AppBarEdge);
     }
 
     private void Dispose()
@@ -98,14 +100,34 @@ public sealed partial class NavBar : Grid
             else
                 ShowWindow(taskbarHwnd, SW.SW_SHOW);
         }
+
+        fixed (char* className = "Shell_SecondaryTrayWnd")
+        fixed (char* name = "")
+        {
+            var taskbarHwnd = FindWindowW(className, name);
+
+            /*APPBARDATA abd = new()
+            {
+                cbSize = (uint)sizeof(APPBARDATA),
+                hWnd = taskbarHwnd,
+                lParam = state
+            };
+
+            SHAppBarMessage(ABM.ABM_SETSTATE, &abd);*/
+
+            if (state == ABS_AUTOHIDE)
+                ShowWindow(taskbarHwnd, SW.SW_HIDE);
+            else
+                ShowWindow(taskbarHwnd, SW.SW_SHOW);
+        }
     }
 
-    private unsafe LRESULT WindowSubclassProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, nuint uIdSubclass, nuint dwRefData)
+    private LRESULT WindowSubclassProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, nuint uIdSubclass, nuint dwRefData)
     {
         switch (uMsg)
         {
             case WM.WM_MOUSEACTIVATE:
-                if (Service.TaskViewViewModel.IsVisible ||
+                if (Service.TaskView[monitor].IsVisible ||
                     shellStart.Visibility == ViewVisibility.Visible ||
                     shellSearch.Visibility == ViewVisibility.Visible)
                 {
@@ -118,7 +140,8 @@ public sealed partial class NavBar : Grid
                     switch (wParam)
                     {
                         case ABN_POSCHANGED:
-                            window.PositionAppBar(AppBarHeight, AppBarEdge);
+                            window.PositionAppBar(monitor, AppBarHeight, AppBarEdge);
+                            SetTaskbarState(ABS_AUTOHIDE);
                             return TRUE;
                         case ABN_FULLSCREENAPP:
                             if (lParam == 1)
@@ -144,8 +167,8 @@ public sealed partial class NavBar : Grid
 
     private void Back_Click(object sender, RoutedEventArgs e)
     {
-        if (Service.TaskViewViewModel.IsVisible)
-            Service.TaskViewViewModel.Hide();
+        if (Service.TaskView[monitor].IsVisible)
+            Service.TaskView[monitor].Hide();
         else
         {
             unsafe
@@ -175,7 +198,7 @@ public sealed partial class NavBar : Grid
     {
         backHoldTimer.Stop();
         Back.ReleasePointerCaptures();
-        Service.TaskViewViewModel.Show();
+        Service.TaskView[monitor].Show();
     }
 
     private void Back_StartTimer(object sender, PointerRoutedEventArgs e)
@@ -205,8 +228,8 @@ public sealed partial class NavBar : Grid
     {
         startHoldTimer.Stop();
         Start.ReleasePointerCaptures();
-        Service.StatusBarViewModel.SetOneHanded(!Service.StatusBarViewModel.OneHanded);
-        Task.Delay(500).ContinueWith(t => window.PositionAppBar(AppBarHeight, AppBarEdge));
+        Service.StatusBar[monitor].SetOneHanded(!Service.StatusBar[monitor].OneHanded);
+        Task.Delay(500).ContinueWith(t => window.PositionAppBar(monitor, AppBarHeight, AppBarEdge));
     }
 
     private void Start_StartTimer(object sender, PointerRoutedEventArgs e)

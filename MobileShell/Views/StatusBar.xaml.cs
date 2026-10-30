@@ -17,16 +17,18 @@ public sealed partial class StatusBar : Grid
     public static readonly int AppBarHeight = 36;
     private static readonly uint AppBarEdge = ABE_TOP;
 
+    private HMONITOR monitor;
     private XamlWindow window;
 
     private SUBCLASSPROC windowSubclassProc = null!;
     private uint appBarMessage;
 
-    private StatusBarViewModel Data;
+    public StatusBarViewModel Data { get; private set; }
 
-    public StatusBar()
+    public StatusBar(HMONITOR monitor)
     {
         this.InitializeComponent();
+        this.monitor = monitor;
         window = XamlWindow.Current;
 
         unsafe
@@ -37,9 +39,9 @@ public sealed partial class StatusBar : Grid
 
         appBarMessage = window.AddAppBar();
 
-        window.PositionAppBar(AppBarHeight, AppBarEdge);
+        window.PositionAppBar(monitor, AppBarHeight, AppBarEdge);
 
-        Data = Service.StatusBarViewModel;
+        Service.StatusBar[monitor] = Data = Service.StatusBarViewModel;
 
         Data.OneHandedModeChanged += OneHandedModeChanged;
 
@@ -51,13 +53,13 @@ public sealed partial class StatusBar : Grid
         var di = DisplayInformation.GetForCurrentView();
         di.DpiChanged += (s, e) =>
         {
-            var monitor = window.MonitorRect();
-            window.PositionAppBar(Data.OneHanded ? (float)monitor.Height / 2f : AppBarHeight, AppBarEdge);
+            var rect = monitor.MonitorRect();
+            window.PositionAppBar(monitor, Data.OneHanded ? (float)rect.Height / 2f : AppBarHeight, AppBarEdge);
         };
         di.OrientationChanged += (s, e) =>
         {
-            var monitor = window.MonitorRect();
-            window.PositionAppBar(Data.OneHanded ? (float)monitor.Height / 2f : AppBarHeight, AppBarEdge);
+            var rect = monitor.MonitorRect();
+            window.PositionAppBar(monitor, Data.OneHanded ? (float)rect.Height / 2f : AppBarHeight, AppBarEdge);
         };
     }
 
@@ -77,8 +79,8 @@ public sealed partial class StatusBar : Grid
             switch (wParam)
             {
                 case ABN_POSCHANGED:
-                    var monitor = window.MonitorRect();
-                    window.PositionAppBar(Data.OneHanded ? (float)monitor.Height / 2f : AppBarHeight, AppBarEdge);
+                    var rect = monitor.MonitorRect();
+                    window.PositionAppBar(monitor, Data.OneHanded ? (float)rect.Height / 2f : AppBarHeight, AppBarEdge);
                     return TRUE;
                 case ABN_FULLSCREENAPP:
                     if (lParam == 1)
@@ -103,8 +105,8 @@ public sealed partial class StatusBar : Grid
 
     private void OneHandedModeChanged()
     {
-        var monitor = window.MonitorRect();
-        window.PositionAppBar(Data.OneHanded ? (float)monitor.Height / 2f : AppBarHeight, AppBarEdge);
+        var rect = monitor.MonitorRect();
+        window.PositionAppBar(monitor, Data.OneHanded ? (float)rect.Height / 2f : AppBarHeight, AppBarEdge);
     }
 
 }

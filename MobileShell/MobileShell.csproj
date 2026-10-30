@@ -32,6 +32,7 @@
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
     <AppxPackageSigningTimestampServerUrl>http://timestamp.digicert.com</AppxPackageSigningTimestampServerUrl>
     <AppxTestLayoutEnabled>False</AppxTestLayoutEnabled>
+    <AddMicrosoftVCLibsDesktopSDKReference>true</AddMicrosoftVCLibsDesktopSDKReference>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <CsWinRTAotWarningLevel>3</CsWinRTAotWarningLevel>
     <DefineConstants>DISABLE_XAML_GENERATED_MAIN;$(DefineConstants)</DefineConstants>

@@ -6,6 +6,11 @@ namespace winrt::UndockedDevKit::Wrapper::implementation
 {
     struct NetworkIcon
     {
+    private:
+        static winrt::event<winrt::Windows::Foundation::EventHandler<winrt::WindowsUdk::UI::Shell::PrimaryIconInfoChangedEventArgs>> m_primaryIconInfoChanged;
+        static winrt::event_token m_targetToken;
+
+    public:
         NetworkIcon() = delete;
 
         static void HookEvent(winrt::Windows::UI::Core::CoreDispatcher const& dispatcher);
@@ -13,9 +18,6 @@ namespace winrt::UndockedDevKit::Wrapper::implementation
         static void PrimaryIconInfoChanged(winrt::event_token const& token) noexcept;
         static void UnhookEvent();
 
-    private:
-        static winrt::event<winrt::Windows::Foundation::EventHandler<winrt::WindowsUdk::UI::Shell::PrimaryIconInfoChangedEventArgs>> m_primaryIconInfoChanged;
-        static winrt::event_token m_targetToken;
     };
 }
 

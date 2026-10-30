@@ -16,7 +16,7 @@
 	</Grid.RowDefinitions>
 
 	<Grid Background="Black" Tapped="OneHandedGrid_Tapped">
-		<TextBlock Text="Tap here to exit one-handed use. Press and hold the Start button to activate." HorizontalAlignment="Center" VerticalAlignment="Bottom" Padding="32" Style="{ThemeResource CaptionTextBlockStyle}" FontSize="14" />
+		<TextBlock Text="Tap here to exit one-handed use. Press and hold the Start button to activate." HorizontalAlignment="Center" VerticalAlignment="Bottom" Padding="32" Style="{ThemeResource CaptionTextBlockStyle}" FontSize="14" Foreground="White" />
 	</Grid>
 
 	<Grid Grid.Row="1" Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}">

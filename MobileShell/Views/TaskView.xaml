@@ -12,6 +12,10 @@
     d:DesignHeight="300"
     d:DesignWidth="400">
 
+    <Grid.Resources>
+        <Thickness x:Key="ScrollViewerScrollBarMargin">0</Thickness>
+    </Grid.Resources>
+
 	<Border x:Name="Desktop" />
 	<ListView x:Name="Apps" IsItemClickEnabled="True" SelectionMode="None" ItemsSource="{x:Bind Data.AppList}"
 				Background="{ThemeResource LayerFillColorDefaultBrush}"
@@ -24,7 +28,7 @@
 		</ListView.ItemTemplate>
 		<ListView.ItemsPanel>
 			<ItemsPanelTemplate>
-				<ItemsStackPanel Orientation="Horizontal" VerticalAlignment="Center" />
+				<StackPanel Orientation="Horizontal" VerticalAlignment="Center" />
 			</ItemsPanelTemplate>
 		</ListView.ItemsPanel>
 		<ListView.ItemContainerStyle>

@@ -5,8 +5,8 @@
 	xmlns:controls="using:Microsoft.UI.Xaml.Controls">
 	<Application.Resources>
 		<controls:XamlControlsResources>
-			<controls:XamlControlsResources.MergedDictionaries>
-				<ResourceDictionary Source="ms-appx:///Resources/Converters.xaml" />
+            <controls:XamlControlsResources.MergedDictionaries>
+                <ResourceDictionary Source="ms-appx:///Resources/Converters.xaml" />
 				<ResourceDictionary Source="ms-appx:///Resources/WinUITemplates.xaml" />
 			</controls:XamlControlsResources.MergedDictionaries>
 		</controls:XamlControlsResources>

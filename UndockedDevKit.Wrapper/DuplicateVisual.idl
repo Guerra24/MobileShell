@@ -1,0 +1,7 @@
+namespace UndockedDevKit.Wrapper
+{
+    runtimeclass DuplicateVisual : Windows.Foundation.IClosable
+    {
+        Windows.UI.Composition.Visual Visual { get; };
+    }
+}

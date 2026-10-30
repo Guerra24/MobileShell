@@ -19,18 +19,20 @@ namespace MobileShell.Views;
 public sealed partial class TaskView : Grid
 {
 
+    private HMONITOR monitor;
     private XamlWindow window;
 
     private WindowThumbnail? desktop;
 
-    private TaskViewViewModel Data;
+    public TaskViewViewModel Data { get; private set; }
 
-    public TaskView()
+    public TaskView(HMONITOR monitor)
     {
         this.InitializeComponent();
+        this.monitor = monitor;
         window = XamlWindow.Current;
 
-        Data = Service.TaskViewViewModel;
+        Service.TaskView[monitor] = Data = Service.TaskViewViewModel;
 
         Data.ShowTaskView += ShowTaskView;
         Data.HideTaskView += HideTaskView;
@@ -45,8 +47,8 @@ public sealed partial class TaskView : Grid
 
     private async Task ShowTaskView()
     {
-        var area = window.MonitorRect();
-        var work = window.MonitorWorkRect();
+        var area = monitor.MonitorRect(1.0f);
+        var work = monitor.MonitorWorkRect();
 
         window.Move((float)work.X, (float)work.Y);
         window.Resize((float)work.Width, (float)work.Height);
@@ -55,16 +57,18 @@ public sealed partial class TaskView : Grid
 
         var virtualLeft = GetSystemMetrics(SM.SM_XVIRTUALSCREEN) / XamlRoot.RasterizationScale;
         var virtualTop = GetSystemMetrics(SM.SM_YVIRTUALSCREEN) / XamlRoot.RasterizationScale;
+        var scale = 1.0f / (float)XamlRoot.RasterizationScale;
 
         desktop.Visual.Offset = new((float)(virtualLeft - work.Left), (float)(virtualTop - work.Top), 0);
+        desktop.Visual.Scale = new(scale, scale, 1.0f);
 
         ElementCompositionPreview.SetElementChildVisual(Desktop, desktop.Visual);
 
-        var app = Data.AppList.FirstOrDefault();
+        var app = Data.AppList.FirstOrDefault(app => monitor == MonitorFromWindow(app.Handle, MONITOR.MONITOR_DEFAULTTONULL) && !IsIconic(app.Handle));
 
         if (app != null)
         {
-            var factory = new WindowThumbnailFactory(app.WindowId);
+            var factory = new UndockedDevKit.Wrapper.WindowThumbnailFactory(app.WindowId);
 
             var scaledSource = new Size(factory.SourceSize.Width / XamlRoot.RasterizationScale, factory.SourceSize.Height / XamlRoot.RasterizationScale);
 
@@ -136,7 +140,7 @@ public sealed partial class TaskView : Grid
     {
         if (app != null)
         {
-            var factory = new WindowThumbnailFactory(app.WindowId);
+            var factory = new UndockedDevKit.Wrapper.WindowThumbnailFactory(app.WindowId);
 
             var scaledSource = new Size(factory.SourceSize.Width / XamlRoot.RasterizationScale, factory.SourceSize.Height / XamlRoot.RasterizationScale);
 

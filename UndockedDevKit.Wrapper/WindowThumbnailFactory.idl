@@ -1,0 +1,14 @@
+#include "DuplicateVisual.idl"
+
+namespace UndockedDevKit.Wrapper
+{
+    runtimeclass WindowThumbnailFactory
+    {
+        WindowThumbnailFactory(Windows.UI.WindowId windowsId);
+
+        Windows.Foundation.Rect SourceBounds { get; };
+        Windows.Foundation.Size SourceSize { get; };
+
+        DuplicateVisual CreateVisual(Windows.UI.Composition.Compositor compositor, Windows.Foundation.Size size);
+    }
+}

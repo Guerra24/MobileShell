@@ -1,7 +1,15 @@
 {
   "profiles": {
     "Local Machine": {
-      "commandName": "MsixPackage"
+      "commandName": "MsixPackage",
+      "nativeDebugging": true
+    },
+    "Surface Duo": {
+      "commandName": "MsixPackage",
+      "remoteDebugEnabled": true,
+      "authenticationMode": "Universal",
+      "remoteDebugMachine": "Phoebe",
+      "nativeDebugging": false
     }
   }
 }

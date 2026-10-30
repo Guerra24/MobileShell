@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MobileShell.Models;
+using MobileShell.Services;
 using System.Collections.ObjectModel;
 using System.Runtime.InteropServices;
 using TerraFX.Interop.Windows;
@@ -50,7 +51,7 @@ public partial class TaskViewViewModel : ObservableObject
         IsVisible = false;
         await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
         {
-            await HideTaskView.Invoke(app ?? AppList.FirstOrDefault());
+            await HideTaskView.Invoke(app ?? AppList.FirstOrDefault(app => Service.Monitor.Value == MonitorFromWindow(app.Handle, MONITOR.MONITOR_DEFAULTTONULL) && !IsIconic(app.Handle)));
 
             AppList.Clear();
         });
@@ -60,7 +61,7 @@ public partial class TaskViewViewModel : ObservableObject
     private unsafe void RestoreWindow(TaskViewAppEntry app)
     {
         var current = MonitorFromWindow(app.Handle, MONITOR.MONITOR_DEFAULTTOPRIMARY);
-        var monitor = MonitorFromPoint(new POINT(), MONITOR.MONITOR_DEFAULTTOPRIMARY);
+        var monitor = Service.Monitor.Value;
 
         if (current != monitor)
         {

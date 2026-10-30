@@ -4,6 +4,7 @@ using Windows.Devices.Radios;
 using Windows.Globalization.DateTimeFormatting;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
+using WindowsUdk.Foundation.Metadata;
 using WindowsUdk.UI.Notifications;
 using WindowsUdk.UI.Shell;
 using WindowsUdk.UI.Shell.PowerUX;
@@ -18,7 +19,7 @@ public partial class StatusBarViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial NetworkIconInfo NetworkIconInfo { get; set; }
     [ObservableProperty]
-    public partial BatteryIconData BatteryIconData { get; set; }
+    public partial BatteryIconData? BatteryIconData { get; set; }
     [ObservableProperty]
     public partial string Clock { get; set; }
     [ObservableProperty]
@@ -28,7 +29,7 @@ public partial class StatusBarViewModel : ObservableObject, IDisposable
     public bool OneHanded { get; private set; }
     public event Action? OneHandedModeChanged;
 
-    private BatteryIcon batteryIcon;
+    private BatteryIcon? batteryIcon;
     private DispatcherTimer clockTimer = new(), generalTimer = new();
     private readonly DateTimeFormatter clockFormatter = new("hour minute");
     private NotificationsSettings notificationsSettings;
@@ -44,9 +45,12 @@ public partial class StatusBarViewModel : ObservableObject, IDisposable
         NetworkIconInfo = NetworkIcon.GetPrimaryIconInfo();
         UndockedDevKit.Wrapper.NetworkIcon.PrimaryIconInfoChanged += NetworkIcon_PrimaryIconInfoChanged;
 
-        batteryIcon = BatteryIcon.GetLocalCompositeBatteryIcon();
-        batteryIcon.IconDataChanged += BatteryIcon_IconDataChanged;
-        BatteryIconData = batteryIcon.GetIconData();
+        if (ApiInformation.IsApiContractPresent("WindowsUdk.UI.Shell.PowerUX.BatteryIconContract", 1))
+        {
+            batteryIcon = BatteryIcon.GetLocalCompositeBatteryIcon();
+            batteryIcon.IconDataChanged += BatteryIcon_IconDataChanged;
+            BatteryIconData = batteryIcon.GetIconData();
+        }
 
         clockTimer.Interval = TimeSpan.FromMilliseconds(500);
         clockTimer.Tick += ClockTimer_Tick;
@@ -100,7 +104,7 @@ public partial class StatusBarViewModel : ObservableObject, IDisposable
     {
         await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
         {
-            BatteryIconData = batteryIcon.GetIconData();
+            BatteryIconData = batteryIcon!.GetIconData();
         });
     }
 
@@ -145,7 +149,7 @@ public partial class StatusBarViewModel : ObservableObject, IDisposable
         generalTimer.Stop();
         clockTimer.Stop();
 
-        batteryIcon.IconDataChanged -= BatteryIcon_IconDataChanged;
+        batteryIcon?.IconDataChanged -= BatteryIcon_IconDataChanged;
         UndockedDevKit.Wrapper.NetworkIcon.PrimaryIconInfoChanged -= NetworkIcon_PrimaryIconInfoChanged; ;
 
         UndockedDevKit.Wrapper.NetworkIcon.UnhookEvent();

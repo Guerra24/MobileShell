@@ -35,10 +35,8 @@ public static class XamlWindowExtensions
         SHAppBarMessage(ABM.ABM_REMOVE, &abd);
     }
 
-    public unsafe static void PositionAppBar(this XamlWindow window, float height, uint edge)
+    public unsafe static void PositionAppBar(this XamlWindow window, HMONITOR monitor, float height, uint edge)
     {
-        var monitor = MonitorFromPoint(new POINT(), MONITOR.MONITOR_DEFAULTTOPRIMARY);
-
         MONITORINFO mi = new()
         {
             cbSize = (uint)sizeof(MONITORINFO)
@@ -81,14 +79,12 @@ public static class XamlWindowExtensions
 
         SHAppBarMessage(ABM.ABM_SETPOS, &abd);
 
-        window.Resize(right / scale, height);
-        window.Move(0, abd.rc.top / scale);
+        window.Resize((right - left) / scale, height);
+        window.Move(abd.rc.left / scale, abd.rc.top / scale);
     }
 
-    public unsafe static Rect MonitorRect(this XamlWindow window)
+    public unsafe static Rect MonitorRect(this HMONITOR monitor, float? scale = null)
     {
-        var monitor = MonitorFromPoint(new POINT(), MONITOR.MONITOR_DEFAULTTOPRIMARY);
-
         MONITORINFO mi = new()
         {
             cbSize = (uint)sizeof(MONITORINFO)
@@ -96,24 +92,25 @@ public static class XamlWindowExtensions
 
         GetMonitorInfoW(monitor, &mi);
 
-        uint dpi;
-        GetDpiForMonitor(monitor, MONITOR_DPI_TYPE.MDT_EFFECTIVE_DPI, &dpi, &dpi);
-        float scale = dpi / 96.0f;
+        if (scale == null)
+        {
+            uint dpi;
+            GetDpiForMonitor(monitor, MONITOR_DPI_TYPE.MDT_EFFECTIVE_DPI, &dpi, &dpi);
+            scale = dpi / 96.0f;
+        }
 
         var rc = mi.rcMonitor;
 
-        var left = rc.left / scale;
-        var top = rc.top / scale;
-        var width = (rc.right - rc.left) / scale;
-        var height = (rc.bottom - rc.top) / scale;
+        var left = rc.left / scale.Value;
+        var top = rc.top / scale.Value;
+        var width = (rc.right - rc.left) / scale.Value;
+        var height = (rc.bottom - rc.top) / scale.Value;
 
         return new Rect(left, top, width, height);
     }
 
-    public unsafe static Rect MonitorWorkRect(this XamlWindow window)
+    public unsafe static Rect MonitorWorkRect(this HMONITOR monitor)
     {
-        var monitor = MonitorFromPoint(new POINT(), MONITOR.MONITOR_DEFAULTTOPRIMARY);
-
         MONITORINFO mi = new()
         {
             cbSize = (uint)sizeof(MONITORINFO)
@@ -123,7 +120,7 @@ public static class XamlWindowExtensions
 
         uint dpi;
         GetDpiForMonitor(monitor, MONITOR_DPI_TYPE.MDT_EFFECTIVE_DPI, &dpi, &dpi);
-        float scale = dpi / 96.0f;
+        var scale = dpi / 96.0f;
 
         var rc = mi.rcWork;
 

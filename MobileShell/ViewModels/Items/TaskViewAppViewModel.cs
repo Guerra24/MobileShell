@@ -1,15 +1,16 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MobileShell.Models;
+using MobileShell.Services;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using TerraFX.Interop.Windows;
+using UndockedDevKit.Wrapper;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Hosting;
 using Windows.UI.Xaml.Media.Imaging;
-using WindowsUdk.UI.Shell;
 using static TerraFX.Interop.Windows.Windows;
 
 namespace MobileShell.ViewModels.Items;
@@ -30,24 +31,25 @@ public partial class TaskViewAppViewModel : ObservableObject
 
     private DuplicateVisual? duplicateVisual;
 
-    public TaskViewAppViewModel(TaskViewViewModel taskViewViewModel)
+    public TaskViewAppViewModel()
     {
-        TaskViewViewModel = taskViewViewModel;
+        TaskViewViewModel = Service.TaskView[Service.Monitor.Value];
     }
 
     public async void Load(TaskViewAppEntry? app, UIElement preview)
     {
+        ElementCompositionPreview.SetElementChildVisual(preview, null);
+
         duplicateVisual?.Dispose();
         duplicateVisual = null;
         Icon?.Dispose();
         Icon = null;
+        TaskViewAppEntry = null;
 
-        ElementCompositionPreview.SetElementChildVisual(preview, null);
+        if (app == null || !TaskViewViewModel.AppList.Contains(app))
+            return;
 
         TaskViewAppEntry = app;
-
-        if (app == null)
-            return;
 
         var factory = new WindowThumbnailFactory(app.WindowId);
 
