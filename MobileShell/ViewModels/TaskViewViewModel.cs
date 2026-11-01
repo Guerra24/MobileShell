@@ -97,7 +97,7 @@ public partial class TaskViewViewModel : ObservableObject
         var gcHandle = GCHandle.Alloc(results);
         try
         {
-            EnumWindows(&EnumWindowsCallback, (LPARAM)(IntPtr)gcHandle);
+            EnumWindows(&EnumWindowsCallback, (LPARAM)(nint)gcHandle);
         }
         finally
         {

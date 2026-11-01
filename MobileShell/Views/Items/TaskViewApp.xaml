@@ -5,12 +5,19 @@
     xmlns:local="using:MobileShell.Views.Items"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	DataContextChanged="UserControl_DataContextChanged"
+	Loaded="TaskViewApp_Loaded"
+	DataContextChanged="TaskViewApp_DataContextChanged"
+	ManipulationMode="TranslateY,TranslateInertia,System"
+	ManipulationStarted="TaskViewApp_ManipulationStarted"
+	ManipulationDelta="TaskViewApp_ManipulationDelta"
+	ManipulationCompleted="TaskViewApp_ManipulationCompleted"
+	PointerPressed="TaskViewApp_PointerPressed"
+	PointerReleased="TaskViewApp_PointerReleased"
     mc:Ignorable="d"
     d:DesignHeight="564"
     d:DesignWidth="300">
 
-	<Grid Width="{x:Bind Data.Width, Mode=OneWay}">
+	<Grid x:Name="Root" Width="{x:Bind Data.Width, Mode=OneWay}" Background="Transparent">
 		<Grid.RowDefinitions>
 			<RowDefinition Height="64" />
 			<RowDefinition Height="500" />

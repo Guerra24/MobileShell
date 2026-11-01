@@ -28,15 +28,21 @@
 		</ListView.ItemTemplate>
 		<ListView.ItemsPanel>
 			<ItemsPanelTemplate>
-				<StackPanel Orientation="Horizontal" VerticalAlignment="Center" />
+				<ItemsStackPanel Orientation="Horizontal" VerticalAlignment="Center" />
 			</ItemsPanelTemplate>
 		</ListView.ItemsPanel>
 		<ListView.ItemContainerStyle>
-			<Style BasedOn="{StaticResource WinUIListViewItemStyle}" TargetType="ListViewItem">
-				<Setter Property="Padding" Value="8,8,8,6" />
+			<Style BasedOn="{StaticResource TaskViewListViewItemStyle}" TargetType="ListViewItem">
 				<Setter Property="Margin" Value="0" />
 			</Style>
 		</ListView.ItemContainerStyle>
+		<ListView.ItemContainerTransitions>
+			<TransitionCollection>
+				<PopupThemeTransition FromVerticalOffset="200" />
+				<ReorderThemeTransition />
+				<RepositionThemeTransition IsStaggeringEnabled="False" />
+			</TransitionCollection>
+		</ListView.ItemContainerTransitions>
 	</ListView>
 	<Border x:Name="Foreground" />
 </Grid>

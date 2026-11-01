@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.WinUI;
+using CommunityToolkit.WinUI.Animations;
 using MobileShell.Extensions;
 using MobileShell.Models;
 using MobileShell.Services;
@@ -10,6 +11,7 @@ using Windows.UI.Composition;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Hosting;
+using Windows.UI.Xaml.Media.Animation;
 using WindowsUdk.UI.Shell;
 using XamlHostingKit;
 using static TerraFX.Interop.Windows.Windows;
@@ -18,6 +20,9 @@ namespace MobileShell.Views;
 
 public sealed partial class TaskView : Grid
 {
+
+    private static AnimationBuilder FadeIn = AnimationBuilder.Create().Opacity(to: 1, duration: TimeSpan.FromMilliseconds(400), easingMode: EasingMode.EaseIn);
+    private static AnimationBuilder FadeOut = AnimationBuilder.Create().Opacity(to: 0, duration: TimeSpan.FromMilliseconds(400), easingMode: EasingMode.EaseOut);
 
     private HMONITOR monitor;
     private XamlWindow window;
@@ -47,6 +52,10 @@ public sealed partial class TaskView : Grid
 
     private async Task ShowTaskView()
     {
+        ElementCompositionPreview.GetElementVisual(Apps).Opacity = 0;
+
+        desktop?.Dispose();
+
         var area = monitor.MonitorRect(1.0f);
         var work = monitor.MonitorWorkRect();
 
@@ -68,133 +77,143 @@ public sealed partial class TaskView : Grid
 
         if (app != null)
         {
-            var factory = new UndockedDevKit.Wrapper.WindowThumbnailFactory(app.WindowId);
-
-            var scaledSource = new Size(factory.SourceSize.Width / XamlRoot.RasterizationScale, factory.SourceSize.Height / XamlRoot.RasterizationScale);
-
-            using var thumbnail = factory.CreateVisual(window.Compositor, scaledSource);
-
-            var relativeX = factory.SourceBounds.X / XamlRoot.RasterizationScale - window.Bounds.X;
-            var relativeY = factory.SourceBounds.Y / XamlRoot.RasterizationScale - window.Bounds.Y;
-
-            thumbnail.Visual.Offset = new((float)relativeX, (float)relativeY, 0.0f);
-
-            ElementCompositionPreview.SetElementChildVisual(Foreground, thumbnail.Visual);
-
-            await Task.Delay(5);
-
-            window.Show();
-
             Apps.UpdateLayout();
 
-            var container = Apps.ContainerFromItem(app);
-            var targetElement = container.FindDescendant("Preview")!;
-            var targetVisual = ElementCompositionPreview.GetElementVisual(targetElement);
+            var targetElement = Apps.ContainerFromItem(app)?.FindDescendant("Preview");
 
-            var targetPoint = targetElement.TransformToVisual(this).TransformPoint(new Point(0, 0));
+            if (targetElement != null)
+            {
+                var factory = new UndockedDevKit.Wrapper.WindowThumbnailFactory(app.WindowId);
 
-            float scaleX = (float)(targetElement.ActualWidth / scaledSource.Width);
-            float scaleY = (float)(targetElement.ActualHeight / scaledSource.Height);
+                var scaledSource = new Size(factory.SourceSize.Width / XamlRoot.RasterizationScale, factory.SourceSize.Height / XamlRoot.RasterizationScale);
 
-            var easing = window.Compositor.CreateCubicBezierEasingFunction(new Vector2(0.00f, 0.4f), new Vector2(0.2f, 1.0f));
-            var duration = TimeSpan.FromMilliseconds(400);
+                using var thumbnail = factory.CreateVisual(window.Compositor, scaledSource);
 
-            var scaleAnim = window.Compositor.CreateVector3KeyFrameAnimation();
-            scaleAnim.InsertKeyFrame(1.0f, new(scaleX, scaleY, 1.0f), easing);
-            scaleAnim.Duration = duration;
+                var relativeX = factory.SourceBounds.X / XamlRoot.RasterizationScale - window.Bounds.X;
+                var relativeY = factory.SourceBounds.Y / XamlRoot.RasterizationScale - window.Bounds.Y;
 
-            var offsetAnim = window.Compositor.CreateVector3KeyFrameAnimation();
-            offsetAnim.InsertKeyFrame(1.0f, new((float)targetPoint.X, (float)targetPoint.Y, 0.0f), easing);
-            offsetAnim.Duration = duration;
+                thumbnail.Visual.Offset = new((float)relativeX, (float)relativeY, 0.0f);
 
-            var snapEase = window.Compositor.CreateStepEasingFunction();
-            snapEase.StepCount = 1;
-            snapEase.IsFinalStepSingleFrame = true;
+                ElementCompositionPreview.SetElementChildVisual(Foreground, thumbnail.Visual);
 
-            var opacityAnim = window.Compositor.CreateScalarKeyFrameAnimation();
-            opacityAnim.InsertKeyFrame(0.0f, 0.0f);
-            opacityAnim.InsertKeyFrame(1.0f, 1.0f, snapEase);
-            opacityAnim.Duration = duration;
+                await Task.Delay(5);
 
-            var animationGroup = window.Compositor.CreateScopedBatch(CompositionBatchTypes.Animation);
-            thumbnail.Visual.StartAnimation("Scale", scaleAnim);
-            thumbnail.Visual.StartAnimation("Offset", offsetAnim);
-            targetVisual.StartAnimation("Opacity", opacityAnim);
+                window.Show();
+                FadeIn.Start(Apps);
 
-            var tcs = new TaskCompletionSource();
+                var targetVisual = ElementCompositionPreview.GetElementVisual(targetElement);
 
-            animationGroup.Completed += (s, e) => tcs.SetResult();
-            animationGroup.End();
+                var targetPoint = targetElement.TransformToVisual(this).TransformPoint(new(0, 0));
 
-            await tcs.Task;
+                float scaleX = (float)(targetElement.ActualWidth / scaledSource.Width);
+                float scaleY = (float)(targetElement.ActualHeight / scaledSource.Height);
 
-            ElementCompositionPreview.SetElementChildVisual(Foreground, null);
+                var easing = window.Compositor.CreateCubicBezierEasingFunction(new(0.00f, 0.4f), new(0.2f, 1.0f));
+                var duration = TimeSpan.FromMilliseconds(400);
+
+                var scaleAnim = window.Compositor.CreateVector3KeyFrameAnimation();
+                scaleAnim.InsertKeyFrame(1.0f, new(scaleX, scaleY, 1.0f), easing);
+                scaleAnim.Duration = duration;
+
+                var offsetAnim = window.Compositor.CreateVector3KeyFrameAnimation();
+                offsetAnim.InsertKeyFrame(1.0f, new((float)targetPoint.X, (float)targetPoint.Y, 0.0f), easing);
+                offsetAnim.Duration = duration;
+
+                var snapEase = window.Compositor.CreateStepEasingFunction();
+                snapEase.StepCount = 1;
+                snapEase.IsFinalStepSingleFrame = true;
+
+                var opacityAnim = window.Compositor.CreateScalarKeyFrameAnimation();
+                opacityAnim.InsertKeyFrame(0.0f, 0.0f);
+                opacityAnim.InsertKeyFrame(1.0f, 1.0f, snapEase);
+                opacityAnim.Duration = duration;
+
+                var animationGroup = window.Compositor.CreateScopedBatch(CompositionBatchTypes.Animation);
+                thumbnail.Visual.StartAnimation("Scale", scaleAnim);
+                thumbnail.Visual.StartAnimation("Offset", offsetAnim);
+                targetVisual.StartAnimation("Opacity", opacityAnim);
+
+                var tcs = new TaskCompletionSource();
+
+                animationGroup.Completed += (s, e) => tcs.SetResult();
+                animationGroup.End();
+
+                await tcs.Task;
+
+                ElementCompositionPreview.SetElementChildVisual(Foreground, null);
+                return;
+            }
         }
-        else
-        {
-            window.Show();
-        }
+        window.Show();
+        FadeIn.Start(Apps);
     }
 
     private async Task HideTaskView(TaskViewAppEntry? app)
     {
+        var task = FadeOut.StartAsync(Apps);
+
         if (app != null)
         {
-            var factory = new UndockedDevKit.Wrapper.WindowThumbnailFactory(app.WindowId);
+            var sourceElement = Apps.ContainerFromItem(app)?.FindDescendant("Preview");
 
-            var scaledSource = new Size(factory.SourceSize.Width / XamlRoot.RasterizationScale, factory.SourceSize.Height / XamlRoot.RasterizationScale);
+            if (sourceElement != null)
+            {
+                var sourceVisual = ElementCompositionPreview.GetElementVisual(sourceElement);
 
-            using var thumbnail = factory.CreateVisual(window.Compositor, scaledSource);
+                var factory = new UndockedDevKit.Wrapper.WindowThumbnailFactory(app.WindowId);
 
-            var relativeX = factory.SourceBounds.X / XamlRoot.RasterizationScale - window.Bounds.X;
-            var relativeY = factory.SourceBounds.Y / XamlRoot.RasterizationScale - window.Bounds.Y;
+                var scaledSource = new Size(factory.SourceSize.Width / XamlRoot.RasterizationScale, factory.SourceSize.Height / XamlRoot.RasterizationScale);
 
-            var container = Apps.ContainerFromItem(app);
-            var sourceElement = container.FindDescendant("Preview")!;
-            var sourceVisual = ElementCompositionPreview.GetElementVisual(sourceElement);
+                using var thumbnail = factory.CreateVisual(window.Compositor, scaledSource);
 
-            var targetPoint = sourceElement.TransformToVisual(this).TransformPoint(new Point(0, 0));
+                var relativeX = factory.SourceBounds.X / XamlRoot.RasterizationScale - window.Bounds.X;
+                var relativeY = factory.SourceBounds.Y / XamlRoot.RasterizationScale - window.Bounds.Y;
 
-            float scaleX = (float)(sourceElement.ActualWidth / scaledSource.Width);
-            float scaleY = (float)(sourceElement.ActualHeight / scaledSource.Height);
+                var targetPoint = sourceElement.TransformToVisual(this).TransformPoint(new(0, 0));
 
-            thumbnail.Visual.Scale = new(scaleX, scaleY, 1.0f);
-            thumbnail.Visual.Offset = new((float)targetPoint.X, (float)targetPoint.Y, 0.0f);
+                float scaleX = (float)(sourceElement.ActualWidth / scaledSource.Width);
+                float scaleY = (float)(sourceElement.ActualHeight / scaledSource.Height);
 
-            ElementCompositionPreview.SetElementChildVisual(Foreground, thumbnail.Visual);
+                thumbnail.Visual.Scale = new(scaleX, scaleY, 1.0f);
+                thumbnail.Visual.Offset = new((float)targetPoint.X, (float)targetPoint.Y, 0.0f);
 
-            await Task.Delay(5);
+                ElementCompositionPreview.SetElementChildVisual(Foreground, thumbnail.Visual);
 
-            var easing = window.Compositor.CreateCubicBezierEasingFunction(new Vector2(0.00f, 0.4f), new Vector2(0.2f, 1.0f));
-            var duration = TimeSpan.FromMilliseconds(400);
+                await Task.Delay(5);
 
-            var scaleAnim = window.Compositor.CreateVector3KeyFrameAnimation();
-            scaleAnim.InsertKeyFrame(1.0f, new(1.0f, 1.0f, 1.0f), easing);
-            scaleAnim.Duration = duration;
+                var easing = window.Compositor.CreateCubicBezierEasingFunction(new(0.00f, 0.4f), new(0.2f, 1.0f));
+                var duration = TimeSpan.FromMilliseconds(400);
 
-            var offsetAnim = window.Compositor.CreateVector3KeyFrameAnimation();
-            offsetAnim.InsertKeyFrame(1.0f, new((float)relativeX, (float)relativeY, 0.0f), easing);
-            offsetAnim.Duration = duration;
+                var scaleAnim = window.Compositor.CreateVector3KeyFrameAnimation();
+                scaleAnim.InsertKeyFrame(1.0f, new(1.0f, 1.0f, 1.0f), easing);
+                scaleAnim.Duration = duration;
 
-            var opacityAnim = window.Compositor.CreateScalarKeyFrameAnimation();
-            opacityAnim.InsertKeyFrame(0.0f, 0.0f);
-            opacityAnim.InsertKeyFrame(1.0f, 0.0f);
-            opacityAnim.Duration = duration;
+                var offsetAnim = window.Compositor.CreateVector3KeyFrameAnimation();
+                offsetAnim.InsertKeyFrame(1.0f, new((float)relativeX, (float)relativeY, 0.0f), easing);
+                offsetAnim.Duration = duration;
 
-            var animationGroup = window.Compositor.CreateScopedBatch(CompositionBatchTypes.Animation);
-            thumbnail.Visual.StartAnimation("Scale", scaleAnim);
-            thumbnail.Visual.StartAnimation("Offset", offsetAnim);
-            sourceVisual.StartAnimation("Opacity", opacityAnim);
+                var opacityAnim = window.Compositor.CreateScalarKeyFrameAnimation();
+                opacityAnim.InsertKeyFrame(0.0f, 0.0f);
+                opacityAnim.InsertKeyFrame(1.0f, 0.0f);
+                opacityAnim.Duration = duration;
 
-            var tcs = new TaskCompletionSource();
+                var animationGroup = window.Compositor.CreateScopedBatch(CompositionBatchTypes.Animation);
+                thumbnail.Visual.StartAnimation("Scale", scaleAnim);
+                thumbnail.Visual.StartAnimation("Offset", offsetAnim);
+                sourceVisual.StartAnimation("Opacity", opacityAnim);
 
-            animationGroup.Completed += (s, e) => tcs.SetResult();
-            animationGroup.End();
+                var tcs = new TaskCompletionSource();
 
-            await tcs.Task;
+                animationGroup.Completed += (s, e) => tcs.SetResult();
+                animationGroup.End();
 
-            sourceVisual.Opacity = 1.0f;
+                await Task.WhenAll(tcs.Task, task);
+
+                sourceVisual.Opacity = 1.0f;
+            }
         }
+
+        await task;
 
         window.Hide();
         ElementCompositionPreview.SetElementChildVisual(Foreground, null);

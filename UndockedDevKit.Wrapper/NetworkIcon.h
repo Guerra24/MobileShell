@@ -13,7 +13,7 @@ namespace winrt::UndockedDevKit::Wrapper::implementation
     public:
         NetworkIcon() = delete;
 
-        static void HookEvent(winrt::Windows::UI::Core::CoreDispatcher const& dispatcher);
+        static void HookEvent();
         static winrt::event_token PrimaryIconInfoChanged(winrt::Windows::Foundation::EventHandler<winrt::WindowsUdk::UI::Shell::PrimaryIconInfoChangedEventArgs> const& handler);
         static void PrimaryIconInfoChanged(winrt::event_token const& token) noexcept;
         static void UnhookEvent();

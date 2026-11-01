@@ -8,9 +8,11 @@ using TerraFX.Interop.Windows;
 using UndockedDevKit.Wrapper;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
+using Windows.Management.Deployment;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Hosting;
 using Windows.UI.Xaml.Media.Imaging;
+using static TerraFX.Interop.Windows.ERROR;
 using static TerraFX.Interop.Windows.Windows;
 
 namespace MobileShell.ViewModels.Items;
@@ -30,10 +32,12 @@ public partial class TaskViewAppViewModel : ObservableObject
     public partial double Width { get; private set; }
 
     private DuplicateVisual? duplicateVisual;
+    private PackageManager packageManager;
 
     public TaskViewAppViewModel()
     {
         TaskViewViewModel = Service.TaskView[Service.Monitor.Value];
+        packageManager = new();
     }
 
     public async void Load(TaskViewAppEntry? app, UIElement preview)
@@ -65,7 +69,7 @@ public partial class TaskViewAppViewModel : ObservableObject
 
         ElementCompositionPreview.SetElementChildVisual(preview, duplicateVisual.Visual);
 
-        using var icon = LoadAppIcon(app.Handle);
+        using var icon = await LoadAppIcon(app.Handle);
 
         if (icon != null)
         {
@@ -75,7 +79,7 @@ public partial class TaskViewAppViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void CloseWindow()
+    public void CloseWindow()
     {
         if (TaskViewAppEntry == null)
             return;
@@ -91,7 +95,64 @@ public partial class TaskViewAppViewModel : ObservableObject
         Icon = null;
     }
 
-    private static unsafe SoftwareBitmap? LoadAppIcon(HWND hwnd)
+    private async Task<SoftwareBitmap?> LoadAppIcon(HWND hwnd)
+    {
+        if (IsWindowClass(hwnd, "ApplicationFrameWindow"))
+        {
+            var packageFullName = FindPackageFullName(hwnd);
+
+            if (packageFullName == null)
+                return null; // what
+
+            var package = packageManager.FindPackageForUser(string.Empty, packageFullName);
+
+            using var stream = await package.GetLogoAsRandomAccessStreamReference(new Size(32, 32)).OpenReadAsync();
+
+            var decoder = await BitmapDecoder.CreateAsync(stream);
+
+            return await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+        }
+        else
+        {
+            return LoadWin32AppIcon(hwnd);
+        }
+    }
+
+    private static unsafe string? FindPackageFullName(HWND hwnd)
+    {
+        uint framehostPid = 0;
+        GetWindowThreadProcessId(hwnd, &framehostPid);
+
+        var context = new TargetWindowContext
+        {
+            FramehostPid = framehostPid,
+            CoreWindowPid = 0
+        };
+
+        EnumChildWindows(hwnd, &EnumChildWindowsCallback, (LPARAM)(&context));
+
+        var process = OpenProcess(PROCESS.PROCESS_QUERY_LIMITED_INFORMATION, FALSE, context.CoreWindowPid);
+        if (process == HANDLE.NULL)
+            return null;
+        try
+        {
+            uint length = 0;
+            if (GetPackageFullName(process, &length, null) == ERROR_INSUFFICIENT_BUFFER)
+            {
+                var packageFullName = stackalloc char[(int)length];
+                if (GetPackageFullName(process, &length, packageFullName) == 0)
+                    return new(packageFullName);
+                return null;
+            }
+            return null;
+        }
+        finally
+        {
+            CloseHandle(process);
+        }
+    }
+
+    private static unsafe SoftwareBitmap? LoadWin32AppIcon(HWND hwnd)
     {
         HICON hIcon;
 
@@ -156,5 +217,35 @@ public partial class TaskViewAppViewModel : ObservableObject
             if (iconInfo.hbmMask != HBITMAP.NULL)
                 DeleteObject(iconInfo.hbmMask);
         }
+    }
+
+    private struct TargetWindowContext
+    {
+        public uint FramehostPid;
+        public uint CoreWindowPid;
+    }
+
+    [UnmanagedCallersOnly]
+    private static unsafe BOOL EnumChildWindowsCallback(HWND hwnd, LPARAM lParam)
+    {
+        var context = (TargetWindowContext*)lParam.Value;
+
+        uint pid = 0;
+        GetWindowThreadProcessId(hwnd, &pid);
+
+        if (pid != context->FramehostPid && IsWindowClass(hwnd, "Windows.UI.Core.CoreWindow"))
+        {
+            context->CoreWindowPid = pid;
+            return FALSE;
+        }
+
+        return TRUE;
+    }
+
+    private static unsafe bool IsWindowClass(HWND hwnd, string className)
+    {
+        var windowClass = stackalloc char[256];
+        var length = GetClassNameW(hwnd, windowClass, 256);
+        return length > 0 && new string(windowClass, 0, length) == className;
     }
 }

@@ -2,7 +2,7 @@ namespace UndockedDevKit.Wrapper
 {
     static runtimeclass NetworkIcon
     {
-        static void HookEvent(Windows.UI.Core.CoreDispatcher dispatcher);
+        static void HookEvent();
         static event Windows.Foundation.EventHandler<WindowsUdk.UI.Shell.PrimaryIconInfoChangedEventArgs> PrimaryIconInfoChanged;
         static void UnhookEvent();
     }

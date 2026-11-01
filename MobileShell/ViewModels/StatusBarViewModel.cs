@@ -40,7 +40,7 @@ public partial class StatusBarViewModel : ObservableObject, IDisposable
     {
         Dispatcher = dispatcher;
 
-        UndockedDevKit.Wrapper.NetworkIcon.HookEvent(dispatcher = XamlWindow.Current.Dispatcher);
+        UndockedDevKit.Wrapper.NetworkIcon.HookEvent();
 
         NetworkIconInfo = NetworkIcon.GetPrimaryIconInfo();
         UndockedDevKit.Wrapper.NetworkIcon.PrimaryIconInfoChanged += NetworkIcon_PrimaryIconInfoChanged;
@@ -95,9 +95,12 @@ public partial class StatusBarViewModel : ObservableObject, IDisposable
         await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => BluetoothEnabled = sender.State == RadioState.On);
     }
 
-    private void NetworkIcon_PrimaryIconInfoChanged(object? sender, PrimaryIconInfoChangedEventArgs e)
+    private async void NetworkIcon_PrimaryIconInfoChanged(object? sender, PrimaryIconInfoChangedEventArgs e)
     {
-        NetworkIconInfo = NetworkIcon.GetPrimaryIconInfo();
+        await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+        {
+            NetworkIconInfo = NetworkIcon.GetPrimaryIconInfo();
+        });
     }
 
     private async void BatteryIcon_IconDataChanged(BatteryIcon sender, object args)
